@@ -234,7 +234,7 @@ public class PostView extends JDialog {
         JButton button = new JButton(text);
         button.setFont(new Font("Segoe UI", Font.ITALIC, 14));
         button.setBackground(ACCENT_COLOR);
-        button.setForeground(Color.WHITE);
+        button.setForeground(Color.BLACK);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -263,8 +263,8 @@ public class PostView extends JDialog {
     private void submitPost() {
         String title = titleField.getText().trim();
         String description = descriptionArea.getText().trim();
-        String location = locationField.getText().trim();
-        String imagePath = imagePathField.getText().trim();
+        String  imagePath = locationField.getText().trim();
+        String  location = imagePathField.getText().trim();
         
         // Validate input
         if (title.isEmpty() || description.isEmpty() || location.isEmpty()) {

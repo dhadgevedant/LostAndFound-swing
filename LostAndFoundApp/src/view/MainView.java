@@ -243,6 +243,7 @@ public class MainView extends JFrame {
         List<Post> approvedPosts = postController.getApprovedPosts();
         for (Post post : approvedPosts) {
             postsModel.addElement(post);
+
         }
         
         // Clear details when posts are reloaded

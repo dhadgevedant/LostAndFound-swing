@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -24,6 +25,8 @@ public class AdminView extends JFrame {
     private JList<Claim> claimsList;
     private DefaultListModel<Claim> claimsModel;
     private JTextArea postDetailsArea;
+    private JLabel imageLabel;
+    private JPanel imagePanel;
     private JTabbedPane postsTabbedPane;
     
     // UI Colors for Notion-like theme
@@ -232,6 +235,11 @@ public class AdminView extends JFrame {
             TEXT_COLOR
         ));
         
+        // Split details panel into text details and image
+        JPanel detailsContentPanel = new JPanel(new BorderLayout(10, 10));
+        detailsContentPanel.setBackground(BACKGROUND_COLOR);
+        
+        // Text details area
         postDetailsArea = new JTextArea(10, 30);
         postDetailsArea.setEditable(false);
         postDetailsArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -242,7 +250,31 @@ public class AdminView extends JFrame {
         
         JScrollPane detailsScrollPane = new JScrollPane(postDetailsArea);
         detailsScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        detailsPanel.add(detailsScrollPane, BorderLayout.CENTER);
+        
+        // Image panel
+        imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBackground(BACKGROUND_COLOR);
+        imagePanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR),
+            "Image",
+            0,
+            0,
+            new Font("Segoe UI", Font.BOLD, 14),
+            TEXT_COLOR
+        ));
+        
+        imageLabel = new JLabel("No image available", SwingConstants.CENTER);
+        imageLabel.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        imageLabel.setForeground(TEXT_COLOR);
+        imagePanel.add(new JScrollPane(imageLabel), BorderLayout.CENTER);
+        
+        // Create a vertical split between text details and image
+        JSplitPane detailsSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, detailsScrollPane, imagePanel);
+        detailsSplitPane.setDividerLocation(200);
+        detailsSplitPane.setBorder(null);
+        detailsSplitPane.setBackground(BACKGROUND_COLOR);
+        
+        detailsPanel.add(detailsSplitPane, BorderLayout.CENTER);
         
         // Claims panel
         JPanel claimsPanel = new JPanel(new BorderLayout(10, 10));
@@ -277,7 +309,7 @@ public class AdminView extends JFrame {
         
         // Combine details and claims in the right panel with a vertical split
         JSplitPane rightSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, detailsPanel, claimsPanel);
-        rightSplitPane.setDividerLocation(350);
+        rightSplitPane.setDividerLocation(450); // Increased to accommodate image
         rightSplitPane.setBorder(null);
         rightSplitPane.setBackground(BACKGROUND_COLOR);
         rightPanel.add(rightSplitPane, BorderLayout.CENTER);
@@ -347,6 +379,7 @@ public class AdminView extends JFrame {
         
         if (pendingPostsModel.isEmpty()) {
             postDetailsArea.setText("No pending posts to approve.");
+            displayNoImage();
         }
     }
     
@@ -362,6 +395,7 @@ public class AdminView extends JFrame {
         
         if (approvedPostsModel.isEmpty() && postsTabbedPane.getSelectedIndex() == 1) {
             postDetailsArea.setText("No approved posts available.");
+            displayNoImage();
         }
     }
     
@@ -377,19 +411,68 @@ public class AdminView extends JFrame {
             details.append("Location: ").append(selectedPost.getLocation()).append("\n\n");
             details.append("Description: ").append(selectedPost.getDescription()).append("\n\n");
             
-            if (selectedPost.getImagePath() != null && !selectedPost.getImagePath().isEmpty()) {
-                details.append("Image: ").append(selectedPost.getImagePath()).append("\n");
-            }
-            
             if (selectedPost.isClaimed()) {
                 details.append("\n*** THIS ITEM HAS BEEN CLAIMED ***\n");
             }
             
             postDetailsArea.setText(details.toString());
             
+            // Display image if available
+            displayImage(selectedPost);
+            
             // Load claims for this post
             loadClaimsForPost(selectedPost.getPostId());
         }
+    }
+    
+    /**
+     * Display image for the selected post
+     */
+    private void displayImage(Post post) {
+        if (post != null && post.getImagePath() != null && !post.getImagePath().isEmpty()) {
+            try {
+                File imageFile = new File(post.getImagePath());
+                if (imageFile.exists()) {
+                    // Load and scale the image
+                    ImageIcon originalIcon = new ImageIcon(post.getImagePath());
+                    Image originalImage = originalIcon.getImage();
+                    
+                    // Scale the image to fit the panel while maintaining aspect ratio
+                    int maxWidth = 300;
+                    int maxHeight = 200;
+                    
+                    double widthRatio = (double) maxWidth / originalImage.getWidth(null);
+                    double heightRatio = (double) maxHeight / originalImage.getHeight(null);
+                    double ratio = Math.min(widthRatio, heightRatio);
+                    
+                    int newWidth = (int) (originalImage.getWidth(null) * ratio);
+                    int newHeight = (int) (originalImage.getHeight(null) * ratio);
+                    
+                    Image scaledImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+                    ImageIcon scaledIcon = new ImageIcon(scaledImage);
+                    
+                    imageLabel.setIcon(scaledIcon);
+                    imageLabel.setText(""); // Clear any text
+                } else {
+                    imageLabel.setIcon(null);
+                    imageLabel.setText("Image file not found: " + post.getImagePath());
+                }
+            } catch (Exception e) {
+                imageLabel.setIcon(null);
+                imageLabel.setText("Error loading image: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            displayNoImage();
+        }
+    }
+    
+    /**
+     * Display a "no image available" message
+     */
+    private void displayNoImage() {
+        imageLabel.setIcon(null);
+        imageLabel.setText("No image available");
     }
     
     /**
@@ -422,6 +505,7 @@ public class AdminView extends JFrame {
                 loadPendingPosts();
                 loadApprovedPosts();
                 postDetailsArea.setText("");
+                displayNoImage();
                 claimsModel.clear();
             } else {
                 JOptionPane.showMessageDialog(this, 
