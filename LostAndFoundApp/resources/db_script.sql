@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS posts (
     description TEXT,
     image_path VARCHAR(255),
     location VARCHAR(100),
-    date_found DATE,
+    location DATE,
     is_approved BOOLEAN DEFAULT FALSE,
     is_claimed BOOLEAN DEFAULT FALSE,
     post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
